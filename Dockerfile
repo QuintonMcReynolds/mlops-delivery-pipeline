@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---- Stage 1: install dependencies and train the model ----------------------
-FROM python:3.12-slim AS build
+FROM python:3.14-slim AS build
 WORKDIR /src
 ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
 COPY requirements.txt .
@@ -12,7 +12,7 @@ ARG MODEL_VERSION=dev
 RUN /venv/bin/python -m model.train --out /artifacts --version "${MODEL_VERSION}"
 
 # ---- Stage 2: small runtime image, no build tools, non-root user ------------
-FROM python:3.12-slim AS runtime
+FROM python:3.14-slim AS runtime
 ARG MODEL_VERSION=dev
 LABEL org.opencontainers.image.title="mlops-delivery-pipeline" \
       org.opencontainers.image.version="${MODEL_VERSION}"
