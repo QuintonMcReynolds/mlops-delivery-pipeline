@@ -1,0 +1,46 @@
+# Manual deploy to AWS. Off until you set it up (see docs/LEARNING.md, step 7):
+#   1. Create an IAM role that trusts GitHub's OIDC provider for this repo.
+#   2. Add repository variable AWS_ROLE_ARN (Settings > Secrets and variables > Actions > Variables).
+# No long-lived AWS keys are stored in GitHub.
+name: Deploy to AWS
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: plan, apply or destroy
+        type: choice
+        options: [plan, apply, destroy]
+        default: plan
+
+permissions:
+  contents: read
+  id-token: write   # lets GitHub prove its identity to AWS (OIDC)
+
+jobs:
+  terraform:
+    if: vars.AWS_ROLE_ARN != ''
+    runs-on: ubuntu-latest
+    environment: production   # add required reviewers on this environment for a manual approval gate
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+      - run: terraform init -input=false
+      - name: Plan
+        if: inputs.action == 'plan'
+        run: terraform plan -input=false -var "image_tag=${GITHUB_SHA::7}"
+      - name: Apply
+        if: inputs.action == 'apply'
+        run: terraform apply -auto-approve -input=false -var "image_tag=${GITHUB_SHA::7}"
+      - name: Destroy
+        if: inputs.action == 'destroy'
+        run: terraform destroy -auto-approve -input=false

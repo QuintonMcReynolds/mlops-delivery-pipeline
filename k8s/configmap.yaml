@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: model-api-config
+data:
+  LOG_LEVEL: INFO
+  OOD_Z_THRESHOLD: "6"

@@ -1,0 +1,26 @@
+groups:
+  - name: model-service
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(api_requests_total{status=~"5.."}[5m]))
+            / clamp_min(sum(rate(api_requests_total[5m])), 1e-9) > 0.05
+        for: 5m
+        labels: {severity: page}
+        annotations:
+          summary: More than 5% of requests are failing
+      - alert: SlowPredictions
+        expr: |
+          histogram_quantile(0.95, sum(rate(api_request_seconds_bucket{path="/predict"}[5m])) by (le)) > 0.5
+        for: 10m
+        labels: {severity: ticket}
+        annotations:
+          summary: p95 /predict latency above 500 ms
+      - alert: InputDrift
+        expr: |
+          sum(rate(model_out_of_distribution_total[30m]))
+            / clamp_min(sum(rate(model_predictions_total[30m])), 1e-9) > 0.02
+        for: 30m
+        labels: {severity: ticket}
+        annotations:
+          summary: Over 2% of inputs look unlike the training data; consider retraining
