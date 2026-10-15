@@ -102,6 +102,8 @@ Key objects here:
 3. Send out-of-distribution rows (multiply the values by 1000) and watch the drift panel rise.
 4. In Prometheus (http://localhost:9090) → Alerts, see which rules exist and their state.
 
+**A real bug this caught.** The first version ran 2 server processes per container. I sent 340 predictions and Prometheus counted 225. Each process keeps its own counters in memory, and a scrape only reaches one of them. Fix: one process per container and scale with more pods (see the comment in `Dockerfile`). After the fix the counts matched exactly. Lesson: check that your metrics agree with traffic you generated yourself before trusting a dashboard.
+
 **Say it.** "The API exports RED metrics plus an out-of-distribution counter; alert rules page on a > 5 % error rate and open a ticket on latency or input drift."
 
 ---
