@@ -117,24 +117,27 @@ jobs:
 
       - name: Zero-downtime rolling update
         run: |
-          # Change the config, which restarts the pods one at a time. Keep calling
-          # the API the whole time; a single failed request fails the job.
-          kubectl -n model-service port-forward svc/model-api 8081:80 >/tmp/pf2.log 2>&1 &
-          sleep 3
-          ( fails=0; for i in $(seq 1 120); do
-              curl -fsS -o /dev/null http://localhost:8081/readyz || fails=$((fails+1)); sleep 0.5
-            done; echo "$fails" > /tmp/fails ) &
+          # A pod inside the cluster calls the Service twice a second (like real
+          # traffic) while a config change restarts every API pod one by one.
+          kubectl run loadgen -n default --image=curlimages/curl:8.11.1 --restart=Never --command -- \
+            sh -c 'fails=0; i=0; while [ $i -lt 120 ]; do
+                     curl -fsS -o /dev/null --max-time 2 http://model-api.model-service.svc/readyz || fails=$((fails+1))
+                     i=$((i+1)); sleep 0.5
+                   done; echo "FAILS=$fails"'
+          kubectl wait -n default --for=condition=Ready pod/loadgen --timeout=90s
           kubectl -n model-service set env deploy/model-api LOG_LEVEL=DEBUG
           kubectl -n model-service rollout status deploy/model-api --timeout=180s
-          wait
-          echo "failed requests during rollout: $(cat /tmp/fails)"
-          [ "$(cat /tmp/fails)" -le 2 ]
+          kubectl wait -n default --for=jsonpath='{.status.phase}'=Succeeded pod/loadgen --timeout=120s
+          RESULT=$(kubectl logs -n default loadgen | grep FAILS=)
+          echo "$RESULT (out of 120 requests during the rollout)"
+          [ "${RESULT#FAILS=}" -eq 0 ]
 
       - name: Debug info on failure
         if: failure()
         run: |
           kubectl -n model-service describe pods || true
           kubectl -n model-service logs -l app=model-api --tail=50 || true
+          kubectl logs -n default loadgen || true
 
   # 4. Publish the image (only from main or a version tag) -------------------
   publish:

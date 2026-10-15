@@ -20,6 +20,7 @@ spec:
         prometheus.io/path: /metrics
     spec:
       automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 20
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
@@ -45,6 +46,10 @@ spec:
           readinessProbe:
             httpGet: {path: /readyz, port: http}
             periodSeconds: 5
+          lifecycle:
+            # Give the Service time to stop routing here before the process exits.
+            preStop:
+              sleep: {seconds: 5}
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
