@@ -71,3 +71,32 @@ def test_stays_up_but_not_ready_when_model_missing(tmp_path, monkeypatch):
         assert c.get("/healthz").status_code == 200
         assert c.get("/readyz").status_code == 503
         assert c.post("/predict", json={"rows": [[0.0] * 30]}).status_code == 503
+
+
+def test_predict_batch_returns_one_prediction_per_row(client):
+    from sklearn.datasets import load_breast_cancer
+
+    rows = load_breast_cancer().data[:5].tolist()
+    r = client.post("/predict", json={"rows": rows})
+    assert r.status_code == 200
+    assert len(r.json()["predictions"]) == 5
+
+
+def test_rejects_non_finite_values(client, sample_rows):
+    row = list(sample_rows[0])
+    row[0] = float("inf")
+    r = client.post(
+        "/predict",
+        content='{"rows": [['
+        + ",".join("Infinity" if v == float("inf") else str(v) for v in row)
+        + "]]}",
+        headers={"content-type": "application/json"},
+    )
+    assert r.status_code == 422
+
+
+def test_version_reports_model_details(client):
+    body = client.get("/version").json()
+    assert body["model_version"] == "test"
+    assert len(body["features"]) == 30
+    assert body["metrics"]["auc"] >= 0.97

@@ -18,7 +18,7 @@ Do them in order. Each one takes 30–60 minutes.
 2. Break the model on purpose: in `model/train.py` change `C=0.5` to `C=0.00001`. Run `make train`. The gate should fail with exit code 1. Change it back.
 3. Write a new test: `/predict` with 5 rows returns 5 predictions.
 
-**Say it.** "Every push runs lint, 14 tests with an 85 % coverage floor, and a model quality gate, so a code change that quietly makes the model worse can't be merged."
+**Say it.** "Every push runs lint, 17 tests with an 85 % coverage floor, and a model quality gate, so a code change that quietly makes the model worse can't be merged."
 
 ---
 

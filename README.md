@@ -25,7 +25,7 @@ flowchart LR
 
 | Stage | What it proves | Where |
 |---|---|---|
-| Lint + tests | Code style, common bugs, 14 unit/API tests, coverage floor | `tests/`, `pyproject.toml` |
+| Lint + tests | Code style, common bugs, 17 unit/API tests, coverage floor | `tests/`, `pyproject.toml` |
 | Quality gate | A model that scores below AUC 0.97 / accuracy 0.93 cannot ship. The gate also runs inside the Docker build. | `model/train.py` |
 | Infra checks | Terraform is formatted and valid; Kubernetes YAML matches the real API schema (kubeconform) | `terraform/`, `k8s/` |
 | Security scan | No fixable HIGH/CRITICAL CVEs in the image (Trivy) | `ci.yml` |
