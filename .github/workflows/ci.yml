@@ -149,6 +149,7 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3   # emulates arm64 so one runner can build both
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
@@ -167,6 +168,8 @@ jobs:
         with:
           context: .
           push: true
+          # Intel/AMD servers and Apple-silicon Macs / AWS Graviton.
+          platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: MODEL_VERSION=${{ github.sha }}

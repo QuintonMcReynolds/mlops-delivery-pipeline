@@ -132,7 +132,8 @@ Key objects here:
 **Try it.**
 1. `git tag v1.0.0 && git push origin v1.0.0`. Watch a `1.0.0` image appear under Packages.
 2. Pull it: `docker pull ghcr.io/quintonmcreynolds/mlops-delivery-pipeline:1.0.0`.
-3. Write down how you would roll back Kubernetes to the previous image (hint: `kubectl rollout undo`).
+3. On an Apple-silicon Mac, v1.0.0 failed with "no matching manifest for linux/arm64": it was only built for Intel/AMD. v1.0.1 adds `platforms: linux/amd64,linux/arm64` to the publish job. Run `docker manifest inspect ghcr.io/quintonmcreynolds/mlops-delivery-pipeline:1.0.1` and find both platforms.
+4. Write down how you would roll back Kubernetes to the previous image (hint: `kubectl rollout undo`).
 
 **Say it.** "Images are immutable and traceable: SHA tags for every main build, semver tags for releases, and rollback is redeploying a previous tag."
 
